@@ -1,3 +1,5 @@
+#%%
+from icecream import ic
 import torch
 import numpy as np
 
@@ -15,7 +17,7 @@ class Softmax:
         self.C = Z.shape[2]
         Z = Z.reshape(self.N, self.C)
 
-        Ones_C = torch.ones((self.C, 1))
+        Ones_C = torch.ones((self.C, 1), dtype=Z.dtype)
         self.A = torch.exp(Z) / (torch.exp(Z) @ Ones_C)
 
         return self.A.reshape(z_original_shape)
@@ -94,6 +96,8 @@ class Attention:
 
             # Compute the values of Key, Query and Value
 
+            ic(X.shape, self.W_q.shape, self.W_k.shape, self.W_v.shape)
+
             self.Q = X @ self.W_q # (B, T, D_k)
             self.K = X @ self.W_k # (B, T, D_k)
             self.V = X @ self.W_v # (B, T, D_v)
@@ -153,3 +157,52 @@ class Attention:
             dLdX      = self.dLdV @ self.W_v.T + self.dLdK @ self.W_k.T + self.dLdQ @ self.W_q.T
 
             return dLdX
+
+
+
+h = np.array([
+    [ 0.6,  1.3, -0.8,  1.6,  0.4],
+    [ 1.3,  0.9,  0.7, -1.4, -1.3],
+    [-1.6, -0.8,  0.2,  0.0, -1.1],
+    [-0.8, -2.2,  1.0, -0.9, -1.3],
+    [ 0.1, -0.2, -0.5, -0.7,  0.0]
+])
+
+W_Q = np.array([
+    [ 0.32, -1.17, -0.38, -0.34],
+    [-0.29,  0.33,  1.66, -1.61],
+    [ 1.41, -2.32,  1.96,  0.5 ],
+    [ 0.0,  -2.61,  0.02,  0.95],
+    [ 0.01, -0.54,  0.3,  -0.79]
+])
+
+W_K = np.array([
+    [ 0.09, -0.9,  -0.5,  -1.81],
+    [ 1.28, -0.7,  -0.49,  0.18],
+    [-1.35,  2.15,  0.33, -0.69],
+    [-1.43,  0.54,  1.63, -0.58],
+    [-0.32,  0.06,  0.23, -0.11]
+])
+
+W_V = np.array([
+    [-0.72, -1.54, -0.57,  0.75],
+    [-0.55, -0.54, -0.36, -0.12],
+    [-1.24, -0.46,  0.48,  0.66],
+    [-0.29, -0.22,  0.55, -0.83],
+    [-0.61, -0.85, -0.55,  0.23]
+])
+
+model = Attention(torch.tensor(W_K), torch.tensor(W_Q), torch.tensor(W_V))
+y = model.forward(torch.tensor([h]))
+y = y.squeeze()
+
+
+
+
+# %%
+y.round(decimals=2)
+
+# %%
+model.A_sig.squeeze().round(decimals=2)
+
+# %%
